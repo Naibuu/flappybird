@@ -11,30 +11,42 @@ pygame.display.set_caption("Flappybird")
 # Clock
 clock = pygame.time.Clock()
 
-# Sprites
-background = pygame.image.load('sprites/background.png')
-ground = pygame.image.load("sprites/ground.png")
+# Graphics
+background = pygame.image.load('assets/sprites/background.png')
+ground = pygame.image.load("assets/sprites/ground.png")
+game_start = pygame.image.load('assets/sprites/game_start.png')
+game_over = pygame.image.load('assets/sprites/game_over.png')
+
+# Font
+font = pygame.font.Font('assets/munro.ttf', 32)
+
+# Reset
+def reset():
+    constants.SCORE = 0
+    constants.GAME_OVER = False
+    pipe_group.empty()
+    bird.rect.center = (100, 200)
+
 
 # Bird
 class Bird(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
-        self.sheet = pygame.image.load('sprites/bird.png')
+        self.sheet = pygame.image.load('assets/sprites/bird.png')
         self.frame = 0
         self.delay = 0
         self.velocity = 0
         self.pressed = False
 
-        self.image = pygame.Surface((34, 24))
+        self.image = pygame.Surface((34, 24), pygame.SRCALPHA)
         self.image.blit(self.sheet, (0, 0), (34, 0, 34, 24))
-        self.image.set_colorkey("BLACK")
         
         self.rect = self.image.get_rect()
         self.rect.center = (100, 200)
 
     def update(self):
-        if constants.GAME_START == True and constants.GAME_OVER == False:
+        if constants.GAME_START and not constants.GAME_OVER:
             # Gravity
             self.velocity += 0.5
 
@@ -45,10 +57,10 @@ class Bird(pygame.sprite.Sprite):
                 self.rect.y += int(self.velocity)
 
             # Pressing
-            if pygame.mouse.get_pressed()[0] == 1 and self.pressed == False:
+            if pygame.mouse.get_pressed()[0] and not self.pressed:
                 self.pressed = True
                 self.velocity = -8
-                pygame.mixer.Sound('sounds/flap.ogg').play()
+                pygame.mixer.Sound('assets/sounds/flap.ogg').play()
 
             if pygame.mouse.get_pressed()[0] == 0:
                 self.pressed = False
@@ -64,22 +76,21 @@ class Bird(pygame.sprite.Sprite):
                 self.frame = 0
 
             self.image.fill(0)
-            self.image.blit(self.sheet, (0, 0), ((self.frame * self.rect.width), 0, self.rect.width, self.rect.height))
+            self.image.blit(self.sheet, (0, 0), (self.frame * 34, 0, 34, 24))
 
 bird = Bird()
-bird_group = pygame.sprite.Group()
-bird_group.add(bird)
+bird_group = pygame.sprite.Group(bird)
 
 # Pipe
 class Pipe(pygame.sprite.Sprite):
     def __init__(self, y, flip):
         pygame.sprite.Sprite.__init__(self)
         
-        self.image = pygame.image.load('sprites/pipe.png')
+        self.image = pygame.image.load('assets/sprites/pipe.png')
         self.rect = self.image.get_rect()
 
         # Flip
-        if flip == True:
+        if flip:
             self.image = pygame.transform.flip(self.image, False, True)
             self.rect.bottomleft = (576, y - (constants.PIPE_GAP / 2))
         else: 
@@ -97,37 +108,43 @@ run = True
 
 while run:
     clock.tick(constants.FRAMERATE)
-
-    # Background
     screen.blit(background, (0, 0))
 
-    # Groups
     bird_group.draw(screen)
     bird_group.update()
+    pipe_group.draw(screen)
 
-    # If bird hits the ground
+    # Bird collision
     if bird.rect.bottom >= 400:
         constants.GAME_START = False
         constants.GAME_OVER = True
-    # If bird collids with pipe or hits the top
+
     elif pygame.sprite.groupcollide(bird_group, pipe_group, False, False) or bird.rect.top < 0:
         constants.GAME_START = False
         constants.GAME_OVER = True
 
-    pipe_group.draw(screen)
-
-    # Ground
     screen.blit(ground, (constants.GROUND_SCROLL, 400))
 
-    # If game started
-    if constants.GAME_START == True and constants.GAME_OVER == False:
+    # Increment score after passing a pipe
+    if len(pipe_group) > 0:
+        if bird.rect.left < pipe_group.sprites()[0].rect.left and not constants.PIPE_PASSED:
+            constants.PIPE_PASSED = True
+
+        if constants.PIPE_PASSED:
+            if bird.rect.left > pipe_group.sprites()[0].rect.right - 24:
+                constants.SCORE += 1
+                pygame.mixer.Sound('assets/sounds/point.ogg').play()
+                constants.PIPE_PASSED = False
+
+    # On game start
+    if constants.GAME_START and not constants.GAME_OVER:
         ticks = pygame.time.get_ticks()
 
         # Move pipes
         pipe_group.update()
 
         if ticks - constants.LAST_PIPE > constants.PIPE_FREQUENCY:
-            random_y = random.randint(-100, 100)
+            random_y = random.randint(-100, 80)
 
             top_pipe = Pipe(200 + random_y, True)
             bottom_pipe = Pipe(200 + random_y, False)
@@ -142,14 +159,34 @@ while run:
 
         if abs(constants.GROUND_SCROLL) > 22:
             constants.GROUND_SCROLL = 0
+    
+    # On game start or over
+    if constants.GAME_START or constants.GAME_OVER:
+        text = font.render('Score: ' + str(constants.SCORE), True, (215, 168, 76))
+        screen.blit(text, (constants.SCREEN_WIDTH / 2 - 50, 450))
+
+    # Game start
+    if not constants.GAME_START and not constants.GAME_OVER:
+        screen.blit(game_start, (0, 0))
+
+
+    # Game over
+    if constants.GAME_OVER and not constants.GAME_START:
+        screen.blit(game_over, (0, 0))
+    
 
     # Events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
 
-        if event.type == pygame.MOUSEBUTTONDOWN and constants.GAME_START == False and constants.GAME_OVER == False:
-            constants.GAME_START = True
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if not constants.GAME_START and not constants.GAME_OVER:
+                constants.GAME_START = True
+        
+            if constants.GAME_OVER:
+                constants.GAME_OVER = False
+                reset()
 
     pygame.display.update()
 
