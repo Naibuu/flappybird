@@ -8,7 +8,7 @@ from objects import bird, pipe
 pygame.init()
 clock = pygame.time.Clock()
 
-# Screen
+# Screen 
 screen = pygame.display.set_mode(( constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT ))
 pygame.display.set_caption("FlapPybird")
 
@@ -44,9 +44,7 @@ bird = bird.Bird()
 bird_group = pygame.sprite.Group(bird)
 pipe_group = pygame.sprite.Group()
 
-run = True
-
-while run:
+while True:
     clock.tick(constants.FRAMERATE)
     screen.blit(background, (0, 0))
 
@@ -121,7 +119,7 @@ while run:
     # Events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            run = False
+            pygame.quit()
 
         if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.KEYDOWN:
             if not constants.GAME_START and not constants.GAME_OVER:
@@ -132,5 +130,3 @@ while run:
                 reset()
 
     pygame.display.update()
-
-pygame.quit()

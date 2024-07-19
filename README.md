@@ -4,8 +4,3 @@
 />
 
 It's self-explanatory, a reaction of the popular flappy bird game in Python. All assets used are from [samuelcust/flappy-bird-assets](https://github.com/samuelcust/flappy-bird-assets/).
-
-<img
-    alt="Preview"
-    src=".github/preview.png"
-/>
