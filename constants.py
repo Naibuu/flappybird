@@ -8,17 +8,19 @@ FRAMERATE = 60
 # Game Config
 GAME_START = False
 GAME_OVER = False
-GAME_SPEED = 4
+SPEED = 4
 SCORE = 0
 
 # Ground Config
 GROUND_SCROLL = 0
 
 # Pipe Config
-PIPE_FREQUENCY = 1500
+PIPE_FREQUENCY = 1200
 PIPE_GAP = 150
 PIPE_PASSED = False
 LAST_PIPE = pygame.time.get_ticks()
 
 # Bird Config
+BIRD_AMPL_VELOCITY = 0.5
+BIRD_MAX_VELOCITY = 8
 BIRD_COLLIDED = False
